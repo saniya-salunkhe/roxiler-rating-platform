@@ -10,42 +10,126 @@ const ownerRoutes = require('./routes/ownerRoutes');
 
 const app = express();
 
-/* ----------------------- Global middleware ----------------------- */
+/* ========================================================================
+   TRUST RENDER PROXY
+   ======================================================================== */
+
+/*
+ * Render runs the Express backend behind a reverse proxy.
+ *
+ * This allows Express and express-rate-limit to correctly read
+ * the client's IP address from X-Forwarded-For.
+ */
+app.set('trust proxy', 1);
+
+
+/* ========================================================================
+   GLOBAL MIDDLEWARE
+   ======================================================================== */
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
     credentials: true,
   }),
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting — protect against brute-force on auth routes
+app.use(express.json());
+
+app.use(
+  express.urlencoded({
+    extended: true,
+  }),
+);
+
+
+/* ========================================================================
+   RATE LIMITING
+   ======================================================================== */
+
+/*
+ * Protect API routes from excessive requests.
+ *
+ * Maximum:
+ * 100 requests per IP every 15 minutes.
+ */
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
+  windowMs: 15 * 60 * 1000,
+
   max: 100,
-  message: { message: 'Too many requests, please try again later.' },
+
+  standardHeaders: true,
+
+  legacyHeaders: false,
+
+  message: {
+    message: 'Too many requests, please try again later.',
+  },
 });
+
 app.use('/api', apiLimiter);
 
-/* ----------------------------- Routes ---------------------------- */
-app.get('/api/health', (_req, res) => res.json({ status: 'OK', timestamp: new Date().toISOString() }));
 
+/* ========================================================================
+   HEALTH CHECK
+   ======================================================================== */
+
+app.get('/api/health', (_req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+
+/* ========================================================================
+   ROUTES
+   ======================================================================== */
+
+/* Authentication */
 app.use('/api/auth', authRoutes);
+
+/* Administrator */
 app.use('/api/admin', adminRoutes);
+
+/* Stores */
 app.use('/api/stores', storeRoutes);
+
+/* Store Owner */
 app.use('/api/owner', ownerRoutes);
 
-/* ----------------------- Error handlers -------------------------- */
-app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
+
+/* ========================================================================
+   404 - ROUTE NOT FOUND
+   ======================================================================== */
+
+app.use((req, res) => {
+  res.status(404).json({
+    message: 'Route not found',
+  });
+});
+
+
+/* ========================================================================
+   GLOBAL ERROR HANDLER
+   ======================================================================== */
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
-  res.status(500).json({ message: 'Internal server error' });
+
+  res.status(500).json({
+    message: 'Internal server error',
+  });
 });
 
+
+/* ========================================================================
+   SERVER
+   ======================================================================== */
+
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
