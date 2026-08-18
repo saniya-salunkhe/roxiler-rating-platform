@@ -10,52 +10,95 @@ async function signup(req, res) {
   const { name, email, password, address } = req.body;
 
   try {
-    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    const [existing] = await pool.query(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+
     if (existing.length) {
-      return res.status(409).json({ message: 'Email already registered' });
+      return res.status(409).json({
+        message: 'Email already registered',
+      });
     }
 
     const hashed = await bcrypt.hash(password, 10);
+
     await pool.query(
-      'INSERT INTO users (name, email, password, address, role) VALUES (?, ?, ?, ?, "user")',
-      [name, email, hashed, address || null],
+      `INSERT INTO users
+       (name, email, password, address, role)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        name,
+        email,
+        hashed,
+        address || null,
+        'user',
+      ]
     );
 
-    return res.status(201).json({ message: 'Account created successfully. Please log in.' });
+    return res.status(201).json({
+      message: 'Account created successfully. Please log in.',
+    });
   } catch (err) {
     console.error('Signup error:', err);
-    return res.status(500).json({ message: 'Server error during registration' });
+
+    return res.status(500).json({
+      message: 'Server error during registration',
+    });
   }
 }
 
 /**
  * POST /api/auth/login
- * Single login for all roles. Returns a JWT containing { id, role, email, name }.
+ * Single login for all roles.
+ * Returns a JWT containing { id, role, email, name }.
  */
 async function login(req, res) {
   const { email, password } = req.body;
 
   try {
-    const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    const [rows] = await pool.query(
+      'SELECT * FROM users WHERE email = ?',
+      [email]
+    );
+
     if (!rows.length) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({
+        message: 'Invalid email or password',
+      });
     }
 
     const user = rows[0];
-    const match = await bcrypt.compare(password, user.password);
+
+    const match = await bcrypt.compare(
+      password,
+      user.password
+    );
+
     if (!match) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({
+        message: 'Invalid email or password',
+      });
     }
 
     const token = jwt.sign(
-      { id: user.id, role: user.role, email: user.email, name: user.name },
+      {
+        id: user.id,
+        role: user.role,
+        email: user.email,
+        name: user.name,
+      },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' },
+      {
+        expiresIn:
+          process.env.JWT_EXPIRES_IN || '24h',
+      }
     );
 
     return res.json({
       message: 'Login successful',
       token,
+
       user: {
         id: user.id,
         name: user.name,
@@ -65,7 +108,10 @@ async function login(req, res) {
     });
   } catch (err) {
     console.error('Login error:', err);
-    return res.status(500).json({ message: 'Server error during login' });
+
+    return res.status(500).json({
+      message: 'Server error during login',
+    });
   }
 }
 
@@ -76,45 +122,100 @@ async function login(req, res) {
 async function getProfile(req, res) {
   try {
     const [rows] = await pool.query(
-      'SELECT id, name, email, address, role, created_at FROM users WHERE id = ?',
-      [req.user.id],
+      `SELECT
+         id,
+         name,
+         email,
+         address,
+         role,
+         created_at
+       FROM users
+       WHERE id = ?`,
+      [req.user.id]
     );
+
     if (!rows.length) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({
+        message: 'User not found',
+      });
     }
-    return res.json({ user: rows[0] });
+
+    return res.json({
+      user: rows[0],
+    });
   } catch (err) {
     console.error('Profile error:', err);
-    return res.status(500).json({ message: 'Server error' });
+
+    return res.status(500).json({
+      message: 'Server error',
+    });
   }
 }
 
 /**
  * PUT /api/auth/password
- * Change password for the logged-in user (all roles).
+ * Change password for the logged-in user.
  */
 async function changePassword(req, res) {
-  const { currentPassword, newPassword } = req.body;
+  const {
+    currentPassword,
+    newPassword,
+  } = req.body;
 
   try {
-    const [rows] = await pool.query('SELECT password FROM users WHERE id = ?', [req.user.id]);
+    const [rows] = await pool.query(
+      'SELECT password FROM users WHERE id = ?',
+      [req.user.id]
+    );
+
     if (!rows.length) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({
+        message: 'User not found',
+      });
     }
 
-    const match = await bcrypt.compare(currentPassword, rows[0].password);
+    const match = await bcrypt.compare(
+      currentPassword,
+      rows[0].password
+    );
+
     if (!match) {
-      return res.status(400).json({ message: 'Current password is incorrect' });
+      return res.status(400).json({
+        message: 'Current password is incorrect',
+      });
     }
 
-    const hashed = await bcrypt.hash(newPassword, 10);
-    await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashed, req.user.id]);
+    const hashed = await bcrypt.hash(
+      newPassword,
+      10
+    );
 
-    return res.json({ message: 'Password updated successfully' });
+    await pool.query(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [
+        hashed,
+        req.user.id,
+      ]
+    );
+
+    return res.json({
+      message: 'Password updated successfully',
+    });
   } catch (err) {
-    console.error('Change password error:', err);
-    return res.status(500).json({ message: 'Server error' });
+    console.error(
+      'Change password error:',
+      err
+    );
+
+    return res.status(500).json({
+      message: 'Server error',
+    });
   }
 }
 
-module.exports = { signup, login, getProfile, changePassword };
+module.exports = {
+  signup,
+  login,
+  getProfile,
+  changePassword,
+};
