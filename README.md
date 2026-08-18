@@ -1,240 +1,433 @@
 # Roxiler Rating Platform
 
-A full-stack web application that allows users to submit ratings (1–5) for stores registered on the platform. Built with **Express.js**, **MySQL**, and **React.js**.
+A full-stack **Store Rating Platform** developed as part of the **Roxiler Full Stack Development Assignment**.
+
+The application allows users to register, browse stores, and submit ratings from **1 to 5**. It provides role-based functionality for **System Administrators, Normal Users, and Store Owners**.
+
+## Live Demo
+
+- **Frontend:** https://roxiler-rating-platform-1.vercel.app
+- **Backend:** https://roxiler-rating-backend-1.onrender.com
+- **Database:** Aiven MySQL
+
+---
 
 ## Features
 
 ### Single Login System
-One login for all users. Role-based access control redirects users to the appropriate dashboard after authentication.
 
-### User Roles
+The application provides a single authentication system for all users. After successful login, users are redirected according to their assigned role.
 
-#### 1. System Administrator
-- View dashboard with total users, total stores, and total ratings
-- Add new stores, normal users, and admin users
-- View list of stores (Name, Email, Address, Rating)
-- View list of normal and admin users (Name, Email, Address, Role)
-- Apply filters on all listings (Name, Email, Address, Role)
-- View user details — Store Owners also show their store's rating
-- Sort all tables by key fields (ascending/descending)
+### 1. System Administrator
 
-#### 2. Normal User
-- Sign up and log in to the platform
-- Update password after logging in
-- View list of all registered stores
+The administrator can:
+
+- View total users, stores, and ratings
+- Add new stores
+- Add normal users and administrators
+- View all registered users
+- View all registered stores
+- View user details
+- View store ratings
+- Filter users by Name, Email, Address, and Role
+- Filter stores by Name, Email, and Address
+- Sort table data in ascending or descending order
+
+### 2. Normal User
+
+Normal users can:
+
+- Sign up and log in
+- Update their password
+- View all registered stores
 - Search stores by Name and Address
-- View Store Name, Address, Overall Rating, and own submitted rating
-- Submit and modify ratings (1–5) for individual stores
+- View store details
+- View overall store ratings
+- View their own submitted rating
+- Submit ratings from 1 to 5
+- Modify previously submitted ratings
 - Sort store listings
 
-#### 3. Store Owner
+### 3. Store Owner
+
+Store Owners can:
+
 - Log in to the platform
-- Update password after logging in
-- View list of users who rated their store
-- See the average rating of their store
+- Update their password
+- Access the Store Owner dashboard
+- View users who rated their store
+- View submitted ratings
+- View the average rating of their store
+
+---
 
 ## Tech Stack
 
-| Layer      | Technology               |
-|------------|--------------------------|
-| Backend    | Express.js (Node.js)     |
-| Database   | MySQL 8.0+               |
-| Frontend   | React.js                 |
-| Auth       | JWT (JSON Web Tokens)    |
-| Validation | express-validator        |
-| Security   | bcryptjs, CORS, Rate limiting |
+| Layer | Technology |
+|---|---|
+| Frontend | React.js |
+| Backend | Node.js, Express.js |
+| Database | MySQL |
+| Authentication | JWT |
+| Password Security | bcryptjs |
+| Validation | express-validator |
+| API Communication | Axios |
+| API Architecture | REST API |
+| Frontend Deployment | Vercel |
+| Backend Deployment | Render |
+| Database Hosting | Aiven MySQL |
+| Version Control | Git & GitHub |
+
+---
 
 ## Project Structure
 
-```
+```text
 roxiler-rating-platform/
+│
 ├── backend/
 │   ├── config/
-│   │   └── db.js                  # MySQL connection pool
 │   ├── controllers/
-│   │   ├── authController.js      # Signup, login, profile, password
-│   │   ├── adminController.js     # Admin dashboard, users, stores
-│   │   ├── storeController.js     # Store listing, ratings
-│   │   └── ownerController.js     # Store owner dashboard
 │   ├── middleware/
-│   │   ├── auth.js                # JWT verify + role-based access
-│   │   └── validators.js          # express-validator rules
 │   ├── routes/
-│   │   ├── authRoutes.js
-│   │   ├── adminRoutes.js
-│   │   ├── storeRoutes.js
-│   │   └── ownerRoutes.js
 │   ├── utils/
-│   │   └── queryHelpers.js        # WHERE/ORDER BY builders
 │   ├── .env.example
 │   ├── package.json
 │   ├── runMigration.js
-│   └── server.js                  # Express app entry point
+│   └── server.js
+│
 ├── frontend/
 │   ├── public/
-│   │   └── index.html
 │   ├── src/
-│   │   ├── components/common/
-│   │   │   ├── Navbar.js
-│   │   │   ├── SortableTableHeader.js
-│   │   │   └── RatingStars.js
+│   │   ├── components/
 │   │   ├── context/
-│   │   │   └── AuthContext.js
 │   │   ├── pages/
-│   │   │   ├── auth/ (Login, Signup)
-│   │   │   ├── admin/ (Dashboard, Users, Stores, AddUser, AddStore, UserDetail)
-│   │   │   ├── user/ (StoreList, ChangePassword)
-│   │   │   └── store/ (OwnerDashboard)
 │   │   ├── services/
-│   │   │   ├── api.js              # Axios instance with interceptors
-│   │   │   └── services.js         # API service modules
 │   │   ├── styles/
-│   │   │   └── global.css
-│   │   ├── App.js                 # Routes + protected routes
+│   │   ├── App.js
 │   │   └── index.js
 │   ├── .env.example
 │   └── package.json
+│
 ├── database/
-│   └── schema.sql                 # MySQL schema with constraints
+│   └── schema.sql
+│
 └── README.md
 ```
 
+---
+
 ## Database Schema
 
-### users
-| Column     | Type                    | Constraints                          |
-|------------|-------------------------|--------------------------------------|
-| id         | INT AUTO_INCREMENT      | PRIMARY KEY                          |
-| name       | VARCHAR(60)             | NOT NULL, CHECK (20–60 chars)        |
-| email      | VARCHAR(255)            | NOT NULL, UNIQUE                     |
-| password   | VARCHAR(255)            | NOT NULL, CHECK (8–16 chars)         |
-| address    | VARCHAR(400)            | DEFAULT NULL                         |
-| role       | ENUM('admin','user','store_owner') | DEFAULT 'user'             |
+The application uses three main tables:
 
-### stores
-| Column     | Type         | Constraints                          |
-|------------|--------------|--------------------------------------|
-| id         | INT AUTO_INCREMENT | PRIMARY KEY                    |
-| name       | VARCHAR(60)  | NOT NULL, CHECK (20–60 chars)       |
-| email      | VARCHAR(255) | NOT NULL                            |
-| address    | VARCHAR(400) | DEFAULT NULL                         |
-| owner_id   | INT          | FK → users(id) ON DELETE SET NULL    |
+### Users
 
-### ratings
-| Column     | Type         | Constraints                                    |
-|------------|--------------|------------------------------------------------|
-| id         | INT AUTO_INCREMENT | PRIMARY KEY                              |
-| store_id   | INT          | NOT NULL, FK → stores(id) ON DELETE CASCADE    |
-| user_id    | INT          | NOT NULL, FK → users(id) ON DELETE CASCADE      |
-| rating     | TINYINT      | NOT NULL, CHECK (1–5)                          |
-|            |              | UNIQUE (store_id, user_id) — one rating per user per store |
+| Column | Type | Description |
+|---|---|---|
+| id | INT | Primary Key |
+| name | VARCHAR(60) | User name |
+| email | VARCHAR(255) | Unique email |
+| password | VARCHAR(255) | bcrypt hashed password |
+| address | VARCHAR(400) | User address |
+| role | ENUM | admin, user, store_owner |
+
+### Stores
+
+| Column | Type | Description |
+|---|---|---|
+| id | INT | Primary Key |
+| name | VARCHAR(60) | Store name |
+| email | VARCHAR(255) | Store email |
+| address | VARCHAR(400) | Store address |
+| owner_id | INT | Foreign Key to users |
+
+### Ratings
+
+| Column | Type | Description |
+|---|---|---|
+| id | INT | Primary Key |
+| store_id | INT | Foreign Key to stores |
+| user_id | INT | Foreign Key to users |
+| rating | TINYINT | Rating between 1 and 5 |
+
+The database uses:
+
+```text
+UNIQUE(store_id, user_id)
+```
+
+This ensures that one user can have only one rating for a particular store. The user can modify the existing rating later.
+
+---
 
 ## Form Validations
 
-| Field    | Rule                                                        |
-|----------|-------------------------------------------------------------|
-| Name     | 20–60 characters                                             |
-| Email    | Standard email format validation                            |
-| Address  | Max 400 characters                                           |
-| Password | 8–16 characters, at least 1 uppercase letter + 1 special char |
-| Rating   | Integer between 1 and 5                                     |
+| Field | Validation |
+|---|---|
+| Name | 20–60 characters |
+| Email | Valid email format |
+| Address | Maximum 400 characters |
+| Password | 8–16 characters |
+| Password | At least 1 uppercase letter |
+| Password | At least 1 special character |
+| Rating | Integer between 1 and 5 |
+
+---
 
 ## API Endpoints
 
-### Auth
-| Method | Endpoint           | Access  | Description              |
-|--------|---------------------|---------|--------------------------|
-| POST   | /api/auth/signup    | Public  | Register new user        |
-| POST   | /api/auth/login     | Public  | Login (all roles)        |
-| GET    | /api/auth/me        | Auth    | Get current user profile |
-| PUT    | /api/auth/password  | Auth    | Change password          |
+### Authentication
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/signup` | Register normal user |
+| POST | `/api/auth/login` | Login |
+| GET | `/api/auth/me` | Get logged-in user profile |
+| PUT | `/api/auth/password` | Change password |
 
 ### Admin
-| Method | Endpoint              | Access | Description                    |
-|--------|------------------------|--------|--------------------------------|
-| GET    | /api/admin/dashboard   | Admin  | Dashboard stats                |
-| GET    | /api/admin/users       | Admin  | List users (filter + sort)     |
-| GET    | /api/admin/users/:id   | Admin  | User detail                    |
-| POST   | /api/admin/users       | Admin  | Create user                    |
-| GET    | /api/admin/stores      | Admin  | List stores (filter + sort)    |
-| POST   | /api/admin/stores      | Admin  | Create store                   |
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/admin/dashboard` | Dashboard statistics |
+| GET | `/api/admin/users` | List users |
+| GET | `/api/admin/users/:id` | View user details |
+| POST | `/api/admin/users` | Create user |
+| GET | `/api/admin/stores` | List stores |
+| POST | `/api/admin/stores` | Create store |
 
 ### Stores
-| Method | Endpoint              | Access          | Description              |
-|--------|------------------------|-----------------|--------------------------|
-| GET    | /api/stores            | User, Admin     | List stores (search + sort) |
-| GET    | /api/stores/:id        | User, Admin     | Get store detail         |
-| POST   | /api/stores/:id/rate   | User, Admin     | Submit/modify rating     |
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/stores` | List stores |
+| GET | `/api/stores/:id` | Get store details |
+| POST | `/api/stores/:id/rate` | Submit or modify rating |
 
 ### Store Owner
-| Method | Endpoint              | Access      | Description           |
-|--------|------------------------|-------------|-----------------------|
-| GET    | /api/owner/dashboard   | Store Owner | Owner dashboard       |
 
-## Setup Instructions
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/owner/dashboard` | Store Owner dashboard |
+
+---
+
+## Local Setup
 
 ### Prerequisites
+
+Make sure the following are installed:
+
 - Node.js 18+
+- npm
 - MySQL 8.0+
-- npm or yarn
+- Git
 
-### 1. Database Setup
+### 1. Clone Repository
+
 ```bash
-# Option A: Run the schema directly
-mysql -u root -p < database/schema.sql
+git clone https://github.com/saniya-salunkhe/roxiler-rating-platform.git
+cd roxiler-rating-platform
+```
 
-# Option B: Use the migration script (after configuring .env)
+### 2. Database Setup
+
+Run the provided schema:
+
+```bash
+mysql -u root -p < database/schema.sql
+```
+
+Or use the migration script after configuring the backend environment variables:
+
+```bash
 cd backend
-cp .env.example .env
-# Edit .env with your MySQL credentials
+npm install
 npm run migrate
 ```
 
-### 2. Backend Setup
+### 3. Backend Setup
+
+Navigate to the backend:
+
 ```bash
 cd backend
-cp .env.example .env
-# Edit .env with your database credentials and JWT secret
 npm install
-npm run dev    # Development (nodemon)
-# or
-npm start      # Production
 ```
 
-Backend runs on `http://localhost:5000`
+Create a `.env` file:
 
-### 3. Frontend Setup
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_NAME=roxiler_rating_db
+
+JWT_SECRET=your_secure_jwt_secret
+JWT_EXPIRES_IN=24h
+
+CLIENT_URL=http://localhost:3000
+PORT=5000
+NODE_ENV=development
+```
+
+Start the backend:
+
 ```bash
-cd frontend
-cp .env.example .env
-# Edit .env with the backend API URL
-npm install
+npm run dev
+```
+
+or:
+
+```bash
 npm start
 ```
 
-Frontend runs on `http://localhost:3000`
+Backend:
 
-### 4. Default Admin Login
+```text
+http://localhost:5000
 ```
-Email:    admin@roxiler.com
-Password: Admin@1234
+
+### 4. Frontend Setup
+
+Open another terminal:
+
+```bash
+cd frontend
+npm install
 ```
-Note: The password hash in schema.sql is a placeholder. Run the app once and the migration will create the admin. If the hash doesn't match, you can update it by running a quick bcrypt hash generation in the backend.
+
+Create a `.env` file:
+
+```env
+REACT_APP_API_URL=http://localhost:5000/api
+```
+
+Start the frontend:
+
+```bash
+npm start
+```
+
+Frontend:
+
+```text
+http://localhost:3000
+```
+
+---
+
+## Production Deployment
+
+The application is deployed using:
+
+```text
+React Frontend
+      │
+      ▼
+    Vercel
+      │
+      ▼
+Express REST API
+      │
+      ▼
+    Render
+      │
+      ▼
+ Aiven MySQL
+```
+
+### Production URLs
+
+**Frontend**
+
+```text
+https://roxiler-rating-platform-1.vercel.app
+```
+
+**Backend**
+
+```text
+https://roxiler-rating-backend-1.onrender.com
+```
+
+**API Base URL**
+
+```text
+https://roxiler-rating-backend-1.onrender.com/api
+```
+
+---
 
 ## Security Features
-- Passwords hashed with bcrypt (10 rounds)
-- JWT-based authentication with 24h expiry
-- Role-based access control middleware
-- Input validation on all routes (express-validator)
-- Parameterized SQL queries (SQL injection prevention)
-- CORS configured for frontend origin
-- API rate limiting (100 requests / 15 minutes)
 
-## Sorting & Filtering
-All list views support:
-- **Sorting**: Click column headers to sort ascending/descending
-- **Filtering**: Admin can filter by Name, Email, Address, and Role
-- **Search**: Users can search stores by Name and Address
+- Password hashing using bcryptjs
+- JWT-based authentication
+- Role-based authorization
+- Protected frontend routes
+- Protected backend API routes
+- Input validation using express-validator
+- Parameterized MySQL queries
+- SQL injection prevention
+- CORS configuration
+- API rate limiting
+- Express proxy configuration for Render
+- Environment variables for sensitive configuration
+
+> Production database passwords, JWT secrets, and `.env` files are not stored in the public repository.
+
+---
+
+## Sorting, Searching & Filtering
+
+The platform supports:
+
+- Ascending and descending table sorting
+- User filtering by Name, Email, Address, and Role
+- Store filtering by Name, Email, and Address
+- Store search by Name and Address
+
+---
+
+## Assignment Requirements Implemented
+
+- Single login system for all roles
+- Role-based access control
+- System Administrator dashboard
+- Normal User registration
+- Store Owner dashboard
+- Store management
+- User management
+- Store rating system
+- Rating modification
+- Search and filtering
+- Ascending/descending sorting
+- Input validation
+- Secure password storage
+- REST API integration
+- MySQL relational database
+- Responsive React frontend
+- Cloud deployment
+
+---
+
+## Important Security Note
+
+Do not commit the following to GitHub:
+
+- `.env` files
+- Database passwords
+- JWT secrets
+- Private API keys
+- Production credentials
+
+Use environment variables for all sensitive information.
+
+---
 
 ## License
-This project is part of the Roxiler assignment.
+
+This project was developed as part of the **Roxiler Full Stack Development Assignment**.
